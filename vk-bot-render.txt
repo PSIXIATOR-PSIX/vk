@@ -1,7 +1,6 @@
 cd C:\Users\User\vk-auth-fastapi
+Remove-Item -Path .git -Recurse -Force
 git init
 git add .
-git commit -m "Initial commit for Render"
+git commit -m "Clean commit for Render"
 git branch -M main
-git remote add origin https://github.com/PSIXIATOR-PSIX/vk-bot-render.git
-git push -u origin main
