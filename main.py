@@ -1,9 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 
-from fastapi import FastAPI, Request, HTTPException
-from pydantic import BaseModel
-
 app = FastAPI()
 
 # Вставь сюда тот же ключ, который будешь использовать в настройках группы VK
@@ -39,4 +36,5 @@ async def vk_callback(request: Request, data: VKCallback):
         # Но сам ответ пользователю делается отдельным запросом к VK API (messages.send)
         return {"status": "ok"}
 
+    return {"status": "ok"}
     return {"status": "ok"}
