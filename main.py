@@ -88,4 +88,130 @@ for event in longpoll.listen():
         
         ai_text = get_ai_response(user_text)
         send_message(event.user_id, ai_text)
+import os
+import vk_api
+from vk_api.longpoll import VkLongPoll, VkEventType
+import pandas as pd
+import tempfile
+import random
+
+VK_TOKEN = os.getenv('VK_TOKEN')
+
+vk_session = vk_api.VkApi(token=VK_TOKEN)
+longpoll = VkLongPoll(vk_session)
+
+def send_message(user_id, text, attachment=None):
+    params = {
+        'user_id': user_id,
+        'message': text,
+        'random_id': 0
+    }
+    if attachment:
+        params['attachment'] = attachment
+    vk_session.method('messages.send', params)
+
+# «Мультяшные» заготовки ответов
+GREETINGS = [
+    "👋 Привет! Я та самая альтушка с сайта. Готова помочь с данными! ✨",
+    "👓 Привет-привет! Давай разбираться с табличками. Я люблю Excel! 📊",
+    "🖤 Рада видеть! Скинь файл или скажи, что надо посчитать — я всё сделаю! 😊"
+]
+
+THINKING = [
+    "🤔 Сейчас гляну твой файл… Секундочку…",
+    "🧠 Ага, открываю Excel… Дай мне пару секунд…",
+    "✨ Чуть-чуть магии с данными… Готово почти!"
+]
+
+def get_greeting():
+    return random.choice(GREETINGS)
+
+def get_thinking():
+    return random.choice(THINKING)
+
+def process_excel_file(file_path):
+    """
+    Читает Excel, делает простую сводку.
+    Возвращает текст отчёта.
+    Для тебя, учитывая опыт с Power Query, это база — дальше можно усложнять.
+    """
+    try:
+        df = pd.read_excel(file_path)
+        rows = len(df)
+        cols = len(df.columns)
+
+        # Пример простой логики: ищем колонки по ключевым словам
+        year_cols = [c for c in df.columns if 'год' in str(c).lower()]
+        mileage_cols = [c for c in df.columns if 'пробег' in str(c).lower() or 'km' in str(c).lower()]
+
+        report = (
+            f"📘 Файл обработан! 🎉\n\n"
+            f"Строк: {rows}\n"
+            f"Колонок: {cols}\n\n"
+        )
+
+        if year_cols:
+            report += f"🗓 Колонки с годом: {', '.join(year_cols)}\n"
+        if mileage_cols:
+            # Если в колонке пробег — считаем сумму (если числа)
+            for col in mileage_cols:
+                s = pd.to_numeric(df[col], errors='coerce').sum()
+                if pd.notna(s):
+                    report += f"🚗 Суммарный пробег по колонке '{col}': {s:,.0f}\n"
+
+        report += "\n✨ Если скажешь, что именно нужно (разбить, отфильтровать, сводная), я сделаю точнее!"
+        return report
+    except Exception as e:
+        return f"❌ Ой, не смогла прочитать файл. Возможно, это не Excel или формат сложный. Напиши, что хочешь сделать — помогу! 😕 Ошибка: {str(e)[:100]}"
+
+# Основной цикл
+for event in longpoll.listen():
+    if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+        user_id = event.user_id
+        text = event.text.strip() if event.text else ""
+
+        # Если есть вложения
+        attachments = event.attachments
+
+        # Логика: если прислали файл — обрабатываем
+        has_doc = False
+        for att in attachments:
+            if att.get('type') == 'doc':
+                has_doc = True
+                doc = att['doc']
+                file_url = doc['url']
+                file_ext = doc.get('ext', '').lower()
+
+                # Скачиваем файл во временный файл
+                try:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}") as tmp:
+                        tmp_path = tmp.name
+
+                    import urllib.request
+                    urllib.request.urlretrieve(file_url, tmp_path)
+
+                    # Показываем, что «думаем»
+                    send_message(user_id, get_thinking())
+
+                    if file_ext in ['xlsx', 'xls']:
+                        report = process_excel_file(tmp_path)
+                        send_message(user_id, report)
+                    else:
+                        send_message(user_id, f"📄 Принял файл ({file_ext}), но пока умею только Excel. Напиши, что нужно — подскажу, как подготовить! ✨")
+                except Exception as e:
+                    send_message(user_id, f"⚠️ Не получилось скачать файл. Попробуй ещё раз или пришли ссылку. 😕")
+
+        # Обычная логика текста
+        if not has_doc:
+            text_low = text.lower()
+            if any(w in text_low for w in ['привет', 'здравствуй', 'хай']):
+                send_message(user_id, get_greeting())
+            elif any(w in text_low for w in ['пока', 'до свидания']):
+                send_message(user_id, "👋 Пока-пока! Если что — я тут, с табличками наготове. 💖")
+            else:
+                # Универсальный «умный» ответ
+                send_message(user_id, (
+                    "🤔 Интересный вопрос! Расскажи чуть подробнее, что хочешь получить: сводную, разбивку, фильтрацию?\n"
+                    "Или просто скинь Excel — я всё посчитаю! 📊✨"
+                ))
 
