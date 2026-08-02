@@ -54,20 +54,16 @@ def extract_year(text):
     return match.group(0) if match else None
 
 def extract_mileage(text):
-    # Поддерживаем: 123456км, 123 456 км, 123456, «пробег 123456»
-    # Сначала убираем пробелы внутри числа, чтобы было проще искать
     t = re.sub(r'(\d)\s+(\d)', r'\1\2', text)
     match = re.search(r'(\d{4,})\s*км', t, re.IGNORECASE)
     if match:
         return match.group(1) + ' км'
-    # Если нет «км», но есть большое число — считаем его пробегом
     match_num = re.search(r'\b(\d{5,})\b', t)
     if match_num:
         return match_num.group(1) + ' км'
     return None
 
 def extract_formular(text):
-    # АД№..., БЗ№..., №..., иногда без префикса
     match = re.search(r'[А-Я]{0,3}№?\s*\d+', text)
     return match.group(0).strip() if match else None
 
@@ -76,17 +72,14 @@ def extract_order(text):
     return match.group(1).strip() if match else None
 
 def extract_cabin(text):
-    # Ищем 6–7 цифр подряд — это часто код кабины
     match = re.search(r'\b\d{6,7}\b', text)
     return match.group(0) if match else None
 
 def extract_engine(text):
-    # Паттерн ДВС: 40.30-260D2693835 и похожие
     match = re.search(r'\d{2,3}\.\d{2}-\w+', text)
     return match.group(0) if match else None
 
 def extract_driver(text):
-    # Фамилия + инициалы: Иванов И.И. или Иванов И.
     match = re.search(r'[А-ЯЁ][а-яё]{2,}\s+[А-ЯЁ]\.?[А-ЯЁ]?\.?', text)
     return match.group(0).strip() if match else None
 
@@ -95,7 +88,6 @@ def process_excel_file(file_path):
     rows = len(df)
     cols = len(df.columns)
 
-    # Находим текстовые колонки с длинными значениями — кандидаты на разбор
     candidate_cols = []
     for c in df.columns:
         if df[c].dtype == 'object':
@@ -118,11 +110,9 @@ def process_excel_file(file_path):
 
     report += f"🎯 Кандидаты на разбор: {', '.join(candidate_cols)}\n\n"
 
-    # Будем разбирать первую найденную колонку-кандидат
     target_col = candidate_cols[0]
     report += f"✨ Начинаю разбор колонки: '{target_col}'…\n\n"
 
-    # Создаём новые колонки
     new_cols = ['ГОД', 'ПРОБЕГ', 'ФОРМУЛЯР', 'НАРЯД', 'КАБИНА', 'ДВС', 'ВОДИТЕЛЬ']
     for nc in new_cols:
         df[nc] = None
@@ -141,7 +131,6 @@ def process_excel_file(file_path):
         engine = extract_engine(text)
         driver = extract_driver(text)
 
-        # Заполняем строку
         if year:
             df.at[i, 'ГОД'] = year
         if mileage:
@@ -165,7 +154,6 @@ def process_excel_file(file_path):
         f"✨ Теперь у тебя есть аккуратные колонки: {', '.join(new_cols)}.\n"
     )
 
-    # Сводная по годам (если есть ГОД)
     if df['ГОД'].notna().any():
         year_summary = df.groupby('ГОД').size().reset_index(name='Количество строк')
         report += "🗓 Сводка по годам:\n"
@@ -173,9 +161,7 @@ def process_excel_file(file_path):
             report += f"   • {r['ГОД']}: {r['Количество строк']} строк\n"
         report += "\n"
 
-    # Суммарный пробег (если есть ПРОБЕГ)
     if df['ПРОБЕГ'].notna().any():
-        # Извлекаем число из «123456 км»
         def to_num(x):
             if not x:
                 return None
@@ -192,7 +178,6 @@ def process_excel_file(file_path):
     return report, df
 
 def upload_excel_to_vk(user_id, df, filename="processed_data.xlsx"):
-    """Сохраняет DataFrame в Excel, загружает в VK как документ и возвращает attachment"""
     with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
         tmp_path = tmp.name
 
@@ -209,27 +194,6 @@ def upload_excel_to_vk(user_id, df, filename="processed_data.xlsx"):
             os.remove(tmp_path)
         except:
             pass
-def upload_photo(file_path):
-    """Загружает фото в сообщения и возвращает attachment"""
-    photo = upload.photo_messages(photos=file_path)[0]
-    attachment = f"photo{photo['owner_id']}_{photo['id']}"
-    return attachment
-
-def upload_video(file_path):
-    """Загружает видео в сообщения и возвращает attachment"""
-    video = upload.video_messages(file_path=file_path)
-    attachment = f"video{video['owner_id']}_{video['id']}"
-    return attachment
-    
-def send_typing(user_id):
-    """Просит VK показать статус «печатает…» у бота"""
-    try:
-        vk_session.method('messages.setActivity', {
-            'user_id': user_id,
-            'type': 'typing'
-        })
-    except Exception:
-        pass  # Если не сработает в каком-то клиенте — не страшно
 
 def upload_photo(file_path):
     photo = upload.photo_messages(photos=file_path)[0]
@@ -238,8 +202,16 @@ def upload_photo(file_path):
 def upload_video(file_path):
     video = upload.video_messages(file_path=file_path)
     return f"video{video['owner_id']}_{video['id']}"
+    
+def send_typing(user_id):
+    try:
+        vk_session.method('messages.setActivity', {
+            'user_id': user_id,
+            'type': 'typing'
+        })
+    except Exception:
+        pass
 
-# Основной цикл
 for event in longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
         user_id = event.user_id
@@ -250,7 +222,6 @@ for event in longpoll.listen():
         has_photo = False
         has_video = False
 
-        # Сначала определяем типы вложений
         for att in attachments:
             t = att.get('type')
             if t == 'doc':
@@ -260,7 +231,6 @@ for event in longpoll.listen():
             elif t == 'video':
                 has_video = True
 
-        # Приоритет: сначала doc (Excel), потом фото, потом видео, потом текст
         if has_doc:
             for att in attachments:
                 if att.get('type') != 'doc':
@@ -274,7 +244,6 @@ for event in longpoll.listen():
                         tmp_path = tmp.name
                     urllib.request.urlretrieve(file_url, tmp_path)
 
-                    # Эффект «печатает…»
                     send_typing(user_id)
                     time.sleep(random.randint(1, 3))
                     send_message(user_id, get_thinking())
@@ -298,11 +267,9 @@ for event in longpoll.listen():
                     send_message(user_id, f"❌ Ой, не получилось скачать файл. Попробуй ещё раз. 😕 Ошибка: {str(e)[:120]}")
 
         elif has_photo:
-            # Бот «печатает» и отвечает про фото
             send_typing(user_id)
             time.sleep(1)
             send_message(user_id, "📸 Фото получено! Пока просто радуюсь картинке. Если скажешь, что с ним делать — придумаю магию! ✨")
-            # Тут позже можно добавить: скачать фото, сохранить, отправить в нейросеть и т.п.
 
         elif has_video:
             send_typing(user_id)
@@ -310,7 +277,6 @@ for event in longpoll.listen():
             send_message(user_id, "🎥 Видео получено! Сейчас не умею его обрабатывать, но могу сохранить или переслать. Скажи, что нужно! ✨")
 
         else:
-            # Обычные текстовые сообщения
             text_low = text.lower()
             if any(w in text_low for w in ['привет', 'здравствуй', 'хай']):
                 send_message(user_id, get_greeting())
@@ -320,5 +286,4 @@ for event in longpoll.listen():
                 send_message(user_id, (
                     "🤔 Интересный вопрос! Хочешь, разберу Excel? Просто скинь файл — я сделаю разбивку на ГОД/ПРОБЕГ/ФОРМУЛЯР и т.д., посчитаю сводку и верну готовый файл.\n"
                     "Или пришли фото/видео — пока просто порадуюсь, а дальше придумаем! ✨"
-                ))for event in longpoll.listen():
-    ...
+                ))
