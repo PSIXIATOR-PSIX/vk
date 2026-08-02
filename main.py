@@ -1,4 +1,5 @@
 import os
+import time
 import re
 import tempfile
 import urllib.request
@@ -188,7 +189,6 @@ def process_excel_file(file_path):
         "💡 Если формат данных чуть другой — скажи, я подстрою правила!\n"
         "А ещё я могу прислать обратно готовый Excel с новыми колонками. ✨"
     )
-
     return report, df
 
 def upload_excel_to_vk(user_id, df, filename="processed_data.xlsx"):
@@ -209,6 +209,35 @@ def upload_excel_to_vk(user_id, df, filename="processed_data.xlsx"):
             os.remove(tmp_path)
         except:
             pass
+def upload_photo(file_path):
+    """Загружает фото в сообщения и возвращает attachment"""
+    photo = upload.photo_messages(photos=file_path)[0]
+    attachment = f"photo{photo['owner_id']}_{photo['id']}"
+    return attachment
+
+def upload_video(file_path):
+    """Загружает видео в сообщения и возвращает attachment"""
+    video = upload.video_messages(file_path=file_path)
+    attachment = f"video{video['owner_id']}_{video['id']}"
+    return attachment
+    
+def send_typing(user_id):
+    """Просит VK показать статус «печатает…» у бота"""
+    try:
+        vk_session.method('messages.setActivity', {
+            'user_id': user_id,
+            'type': 'typing'
+        })
+    except Exception:
+        pass  # Если не сработает в каком-то клиенте — не страшно
+
+def upload_photo(file_path):
+    photo = upload.photo_messages(photos=file_path)[0]
+    return f"photo{photo['owner_id']}_{photo['id']}"
+
+def upload_video(file_path):
+    video = upload.video_messages(file_path=file_path)
+    return f"video{video['owner_id']}_{video['id']}"
 
 # Основной цикл
 for event in longpoll.listen():
@@ -218,37 +247,70 @@ for event in longpoll.listen():
         attachments = event.attachments
 
         has_doc = False
+        has_photo = False
+        has_video = False
+
+        # Сначала определяем типы вложений
         for att in attachments:
-            if att.get('type') == 'doc':
+            t = att.get('type')
+            if t == 'doc':
                 has_doc = True
+            elif t == 'photo':
+                has_photo = True
+            elif t == 'video':
+                has_video = True
+
+        # Приоритет: сначала doc (Excel), потом фото, потом видео, потом текст
+        if has_doc:
+            for att in attachments:
+                if att.get('type') != 'doc':
+                    continue
                 doc = att['doc']
                 file_url = doc['url']
                 file_ext = doc.get('ext', '').lower()
 
-                # Скачиваем файл
                 try:
                     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}") as tmp:
                         tmp_path = tmp.name
                     urllib.request.urlretrieve(file_url, tmp_path)
 
+                    # Эффект «печатает…»
+                    send_typing(user_id)
+                    time.sleep(random.randint(1, 3))
                     send_message(user_id, get_thinking())
 
                     if file_ext in ['xlsx', 'xls']:
                         report, df_processed = process_excel_file(tmp_path)
                         send_message(user_id, report)
 
-                        # Отправляем обратно обработанный файл
                         attachment = upload_excel_to_vk(user_id, df_processed)
                         if attachment:
-                            send_message(user_id, "📎 Вот твой готовый файл с разбитыми колонками! Скачивай и пользуйся. ✨", attachment=attachment)
+                            send_message(
+                                user_id,
+                                "📎 Вот твой готовый файл с разбитыми колонками! Скачивай и пользуйся. ✨",
+                                attachment=attachment
+                            )
                         else:
                             send_message(user_id, "⚠️ Не удалось отправить файл обратно, но данные уже обработаны — можешь сохранить отчёт.")
                     else:
-                        send_message(user_id, f"📄 Принял файл ({file_ext}), но пока умею лучше всего работать с Excel. Если это CSV — скажи, тоже помогу! ✨")
+                        send_message(user_id, f"📄 Принял файл ({file_ext}), но пока лучше всего умею работать с Excel. Если это CSV — скажи, тоже помогу! ✨")
                 except Exception as e:
-                    send_message(user_id, f"❌ Ой, не получилось скачать файл. Попробуй ещё раз или пришли ссылку. 😕 Ошибка: {str(e)[:120]}")
+                    send_message(user_id, f"❌ Ой, не получилось скачать файл. Попробуй ещё раз. 😕 Ошибка: {str(e)[:120]}")
 
-        if not has_doc:
+        elif has_photo:
+            # Бот «печатает» и отвечает про фото
+            send_typing(user_id)
+            time.sleep(1)
+            send_message(user_id, "📸 Фото получено! Пока просто радуюсь картинке. Если скажешь, что с ним делать — придумаю магию! ✨")
+            # Тут позже можно добавить: скачать фото, сохранить, отправить в нейросеть и т.п.
+
+        elif has_video:
+            send_typing(user_id)
+            time.sleep(1)
+            send_message(user_id, "🎥 Видео получено! Сейчас не умею его обрабатывать, но могу сохранить или переслать. Скажи, что нужно! ✨")
+
+        else:
+            # Обычные текстовые сообщения
             text_low = text.lower()
             if any(w in text_low for w in ['привет', 'здравствуй', 'хай']):
                 send_message(user_id, get_greeting())
@@ -257,5 +319,5 @@ for event in longpoll.listen():
             else:
                 send_message(user_id, (
                     "🤔 Интересный вопрос! Хочешь, разберу Excel? Просто скинь файл — я сделаю разбивку на ГОД/ПРОБЕГ/ФОРМУЛЯР и т.д., посчитаю сводку и верну готовый файл.\n"
-                    "Или скажи, что именно нужно — подстрою логику! ✨"
+                    "Или пришли фото/видео — пока просто порадуюсь, а дальше придумаем! ✨"
                 ))
