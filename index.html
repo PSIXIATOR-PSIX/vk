@@ -3,123 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VK‑Бот ЛЮБИТ ПОСТАРШЕ</title>
+    <title>VK‑Бот: Скуф-Альт‑версия</title>
 
-    <!-- Скрипт VK Open API (ТОЛЬКО ОДИН РАЗ в head!) -->
+    <!-- VK Open API (один раз, в head) -->
     <script type="text/javascript" src="https://vk.com/js/api/openapi.js?169"></script>
     <script type="text/javascript">
-        // ВАЖНО: Убедись, что 54701027 — это ID твоего приложения в VK Developers
+        // ВАЖНО: проверь, что ID совпадает с твоим приложением в VK Developers
         VK.init({ apiId: 54701027, onlyWidgets: true });
     </script>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap');
+
         :root {
-            --vk-blue: #0077FF;
-            --vk-dark: #2D2D2D;
-            --bg-light: #F5F5F5;
-            --card-bg: #FFFFFF;
-            --text-main: #333;
-            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --bg: #fdfbf7;
+            --card: #ffffff;
+            --accent: #ff5e7e; /* розовый акцент */
+            --alt-blue: #6c5ce7; /* фиолетовый для альт‑стиля */
+            --shadow: 0 10px 25px rgba(108, 92, 231, 0.15);
+            --border: #ffe4ec;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        
-        body { background-color: var(--bg-light); color: var(--text-main); line-height: 1.6; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Nunito', sans-serif; }
 
-        /* Header */
+        body {
+            background-color: var(--bg);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header: мультяшный, но читаемый */
         header {
-            background: linear-gradient(135deg, var(--vk-blue), #0056B3);
-            color: white;
             padding: 3rem 1rem;
             text-align: center;
+            background: linear-gradient(135deg, #ffe4ec, #fff0f5);
+            border-bottom: 4px solid var(--accent);
         }
-        header h1 { font-size: 2.8rem; margin-bottom: 0.5rem; font-weight: 700; }
-        header p { font-size: 1.2rem; opacity: 0.95; max-width: 600px; margin: 0 auto; }
+        header h1 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.8rem;
+            color: var(--alt-blue);
+            margin-bottom: 0.5rem;
+        }
+        header p {
+            font-weight: 600;
+            color: #555;
+        }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
 
-        /* Grid Cards */
+        /* Карточки в стиле стикеров */
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin: 2.5rem 0;
         }
         .feature-card {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 16px;
+            background: var(--card);
+            padding: 1.8rem;
+            border-radius: 18px;
             box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
-            border: 1px solid #eee;
+            transition: transform 0.3s ease;
         }
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-            background-color: var(--vk-blue);
+        .feature-card:hover { transform: translateY(-6px); }
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 4px 6px rgba(255, 94, 126, 0.2));
         }
-        .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        .feature-card h3 {
+            color: var(--alt-blue);
+            font-size: 1.3rem;
+            margin-bottom: 0.6rem;
         }
-        .feature-icon { font-size: 2rem; margin-bottom: 1rem; display: block; }
-        .feature-card h3 { color: var(--vk-dark); margin-bottom: 0.8rem; }
         .feature-card p { color: #555; font-size: 0.95rem; }
 
-        /* Stats */
-        .stats-section {
-            background: white;
-            padding: 3rem;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        .stat-row { display: flex; justify-content: space-around; flex-wrap: wrap; margin-top: 1.5rem; }
-        .stat-item { text-align: center; margin: 1rem; }
-        .stat-value { font-size: 2.5rem; font-weight: bold; color: var(--vk-blue); }
-        .stat-label { color: #666; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Form */
+        /* Форма: мягкая, «дружелюбная» */
         .form-wrapper {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
             max-width: 500px;
-            margin: 0 auto 4rem auto;
+            margin: 3rem auto;
+            background: #fff;
+            padding: 2.2rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+            border: 1px dashed var(--border);
         }
         .form-group { margin-bottom: 1.2rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--vk-dark); }
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 700;
+            color: var(--alt-blue);
+        }
         input, textarea {
-            width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;
-            font-size: 1rem; transition: border-color 0.2s;
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 12px;
+            border: 2px solid #eee;
+            outline: none;
+            font-size: 1rem;
+            transition: border-color 0.2s;
         }
-        input:focus, textarea:focus { outline: none; border-color: var(--vk-blue); }
+        input:focus, textarea:focus { border-color: var(--accent); }
         button[type="submit"] {
-            background: var(--vk-blue); color: white; padding: 1rem 2rem;
-            border: none; border-radius: 8px; cursor: pointer; font-size: 1.05rem;
-            width: 100%; transition: background 0.2s;
+            background: var(--accent);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.05rem;
+            font-weight: 700;
+            width: 100%;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(255, 94, 126, 0.25);
         }
-        button[type="submit"]:hover { background: #0056B3; }
+        button[type="submit"]:hover {
+            background: #e04065;
+            transform: scale(1.02);
+        }
 
-        /* Widgets Section */
-        .widgets-section { margin: 4rem 0; }
+        /* Виджеты: секция с «рамкой-стикером» */
+        .widgets-section {
+            margin: 4rem 0;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 2px solid var(--border);
+        }
         .widgets-header { text-align: center; margin-bottom: 2rem; }
-        .widgets-header h2 { color: var(--vk-dark); font-size: 2rem; margin-bottom: 0.5rem; }
-        .widgets-header p { color: #666; }
-
-        /* Footer */
-        footer {
-            background: var(--vk-dark); color: #ccc; text-align: center;
-            padding: 2rem 1rem; margin-top: 3rem; border-top: 1px solid #444;
+        .widgets-header h2 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2rem;
+            color: var(--accent);
+            margin-bottom: 0.4rem;
         }
-        @media (max-width: 768px) {
-            header h1 { font-size: 2rem; }
-            .stat-row { flex-direction: column; gap: 1rem; }
+        .widgets-header p { color: #777; }
+
+        footer {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: #888;
+            border-top: 1px solid #eee;
+            margin-top: 3rem;
+        }
+        @media (max-width: 640px) {
+            header h1 { font-size: 2.2rem; }
+            .form-wrapper, .widgets-section { padding: 1.5rem; }
         }
     </style>
 </head>
@@ -127,59 +162,40 @@
 
     <header>
         <div class="container">
-            <h1>Твой VK‑Бот на Render</h1>
-            <p>Полная автоматизация сообщений, сбор заявок и интеграция виджетов ВКонтакте в одном месте.</p>
+            <h1>VK‑Бот: Альт-версия, все чулки порваны права утеряны </h1>
+            <p>Автоматизация, Стиль. Дающие девочки ну и конечно же WsrThunder, здесь есть все, что тебе надо .</p>
         </div>
     </header>
 
     <main class="container">
-        
-        <!-- Блок "Как это работает" (Твоя фишка) -->
-        <section class="stats-section">
-            <h2 style="color: var(--vk-dark); margin-bottom: 1.5rem;">Почему выбирают этот бот?</h2>
-            <div class="stat-row">
-                <div class="stat-item">
-                    <div class="stat-value">24/7</div>
-                    <div class="stat-label">Круглосуточная работа</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">98%</div>
-                    <div class="stat-label">Автоматизация ответов</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">Мгновенно</div>
-                    <div class="stat-label">Скорость реакции</div>
-                </div>
-            </div>
-        </section>
 
         <!-- Карточки возможностей -->
         <section class="features-grid">
             <article class="feature-card">
-                <span class="feature-icon">🤖</span>
+                <span class="feature-icon">🤖✨</span>
                 <h3>Умные автоответы</h3>
                 <p>Бот мгновенно реагирует на частые вопросы, снижая нагрузку на поддержку и ускоряя ответы клиентам.</p>
             </article>
             <article class="feature-card">
-                <span class="feature-icon">📥</span>
+                <span class="feature-icon">💌📥</span>
                 <h3>Сбор заявок</h3>
                 <p>Принимай заказы, подписки и контакты прямо в сообщениях — без лишних форм и сайтов.</p>
             </article>
             <article class="feature-card">
-                <span class="feature-icon">📊</span>
+                <span class="feature-icon">📊🎯</span>
                 <h3>Аналитика диалогов</h3>
                 <p>Отслеживай статистику: количество диалогов, конверсию и популярные вопросы для улучшения сервиса.</p>
             </article>
         </section>
 
-        <!-- Форма заявки (Теперь она реально работает в консоли) -->
+        <!-- Форма заявки -->
         <section>
             <div class="form-wrapper">
-                <h2 style="text-align: center; color: var(--vk-dark); margin-bottom: 1.5rem;">Оставить заявку</h2>
+                <h2 style="text-align:center; color:var(--alt-blue); margin-bottom:1.2rem;">Оставить заявку</h2>
                 <form id="bot-form">
                     <div class="form-group">
                         <label for="name">Ваше имя</label>
-                        <input type="text" id="name" name="name" required placeholder="Иван Иванов">
+                        <input type="text" id="name" name="name" required placeholder="Например: Кира">
                     </div>
                     <div class="form-group">
                         <label for="phone">Телефон или VK ID</label>
@@ -187,27 +203,27 @@
                     </div>
                     <div class="form-group">
                         <label for="message">Задача для бота</label>
-                        <textarea id="message" name="message" rows="4" placeholder="Например: автоответы на вопросы о доставке..."></textarea>
+                        <textarea id="message" name="message" rows="4" placeholder="Что должен делать бот?"></textarea>
                     </div>
-                    <button type="submit">Получить консультацию</button>
+                    <button type="submit">Плакать сюда</button>
                 </form>
             </div>
         </section>
 
-        <!-- Секция виджетов VK -->
+        <!-- Виджеты VK -->
         <section class="widgets-section">
             <div class="widgets-header">
                 <h2>Сообщество и медиа</h2>
-                <p>Обсудите проект и послушайте плейлист прямо на сайте</p>
+                <p>АЛЬТУШКИ Такие ..... ДОСТУПНЫЕ</p>
             </div>
 
-            <!-- Виджет комментариев -->
-            <div id="vk_comments" style="margin-bottom: 40px;"></div>
+            <!-- Комментарии -->
+            <div id="vk_comments"></div>
             <script type="text/javascript">
                 VK.Widgets.Comments("vk_comments", {limit: 15, attach: "*"});
             </script>
 
-            <!-- Плейлист (Твой ID: 263165639, плейлист 185) -->
+            <!-- Плейлист (твой ID: 263165639, плейлист 185) -->
             <div id="vk_playlist_263165639_185"></div>
             <script type="text/javascript">
                 (function() {
@@ -215,8 +231,8 @@
                 }());
             </script>
 
-            <!-- Виджет авторизации (для теста или входа) -->
-            <div id="vk_auth" style="margin-top: 40px;"></div>
+            <!-- Авторизация -->
+            <div id="vk_auth" style="margin-top:30px;"></div>
             <script>
                 VK.Widgets.Auth("vk_auth", { width: "350" });
             </script>
@@ -224,28 +240,40 @@
     </main>
 
     <footer>
-        <p>&copy; 2024 VK‑Бот. Все права защищены.</p>
-        <p style="margin-top: 0.5rem; opacity: 0.7; font-size: 0.9rem;">
-            Сайт развернут на Render. Виджеты работают при условии добавления домена в настройки приложения VK Developers.
+        <p>&copy;VK‑Бот. Все права защищены (ВОДИТЕЛЬСКОЕ ЕСЛИ УЖ).</p>
+        <p style="margin-top:0.5rem; font-size:0.85rem; opacity:0.7;">
+            Сайт на Render. Виджеты работают, если домен добавлен в настройки приложения VK Developers.
         </p>
     </footer>
 
-    <!-- Логика формы (отправляет данные в консоль браузера, чтобы ты видел их перед отправкой на свой Python-сервер) -->
+    <!-- Логика формы: данные уходят в консоль, чтобы ты мог их дальше отправить в свой Python-бот -->
     <script>
-        document.getElementById('bot-form').addEventListener('submit', function(e) {
+        const form = document.getElementById('bot-form');
+        form.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const message = document.getElementById('message').value;
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const message = document.getElementById('message').value.trim();
 
-            // Данные, которые ты сможешь потом отправить на свой бэкенд (main.py)
-            const payload = { name, phone, message, timestamp: new Date().toISOString() };
-            
-            console.log('Заявка с сайта:', payload);
-            alert(`Спасибо, ${name}! Ваша заявка принята. Мы свяжемся с вами.`);
-            
-            this.reset();
+            if (!name || !phone) {
+                alert('Пожалуйста, заполните имя и телефон.');
+                return;
+            }
+
+            const payload = {
+                name,
+                phone,
+                message,
+                timestamp: new Date().toISOString(),
+                source: 'alt-page'
+            };
+
+            // Это видно в консоли браузера (F12 → Console)
+            console.log('Заявка с альт-страницы:', payload);
+
+            alert(`Спасибо, ${name}! Заявка принята. Мы скоро свяжемся.`);
+            form.reset();
         });
     </script>
 </body>
