@@ -17,11 +17,13 @@
 
   <body>
     <h1>Привет Малыха VK должен появиться ниже:</h1>
-<div id="vk_comments"></div>
+<div id="vk_comments_browse"></div>
 <script type="text/javascript">
-  VK.Widgets.Comments("vk_comments", {limit: 20, attach: "*"});
+window.onload = function () {
+ VK.init({apiId: 111, onlyWidgets: true});
+ VK.Widgets.CommentsBrowse('vk_comments_browse', {width: 500, limit: 5, mini: 0});
+}
 </script>
-    <!-- Место для виджета -->
     <div id="vk_auth"></div>
     <script>
       VK.Widgets.Auth("vk_auth", { width: "250" });
