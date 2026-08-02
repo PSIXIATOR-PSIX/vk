@@ -38,3 +38,54 @@ async def vk_callback(request: Request, data: VKCallback):
 
     return {"status": "ok"}
     return {"status": "ok"}
+    import os
+import vk_api
+from vk_api.longpoll import VkLongPoll, VkEventType
+import openai  # pip install openai
+
+# --- НАСТРОЙКИ ---
+VK_TOKEN = os.getenv('VK_TOKEN')  # возьми из переменных окружения Render
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')  # тоже из Render
+
+# Инициализация VK
+vk_session = vk_api.VkApi(token=VK_TOKEN)
+longpoll = VkLongPoll(vk_session)
+
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+def send_message(user_id, text):
+    vk_session.method('messages.send', {
+        'user_id': user_id,
+        'message': text,
+        'random_id': 0
+    })
+
+def get_ai_response(user_text):
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Ты — дружелюбный мультяшный бот-альтушка. Отвечай кратко, с эмодзи, в лёгком стиле, но по делу. Не использу длинные вступления."},
+                {"role": "user", "content": user_text}
+            ],
+            temperature=0.7,
+            max_tokens=256
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print("Ошибка AI:", e)
+        return "Ой, сейчас не могу поболтать — сервер думает. Попробуй ещё раз!"
+
+# Основной цикл
+for event in longpoll.listen():
+    if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+        user_text = event.text.strip()
+        if not user_text:
+            continue
+        
+        # Отправляем «печатает…» (опционально)
+        # Тут можно добавить статус typing, если нужно
+        
+        ai_text = get_ai_response(user_text)
+        send_message(event.user_id, ai_text)
+
