@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <title>VK-бот на Render</title>
+
+    <!-- Скрипт VK -->
+    <script type="text/javascript" src="https://vk.com/js/api/openapi.js?168"></script>
+    <script type="text/javascript">
+      VK.init({ apiId: 54701027, onlyWidgets: true });
+    </script>
+  </head>
+
+  <body>
+    <h1>Привет! Виджет VK должен появиться ниже:</h1>
+
+    <!-- Место для виджета -->
+    <div id="vk_auth"></div>
+    <script>
+      VK.Widgets.Auth("vk_auth", { width: "250" });
+    </script>
+dd index.html with VK widgets
+    <p>Это твой сайт на Render. Сюда можно добавлять любой контент.</p>
+  </body>
+</html>
