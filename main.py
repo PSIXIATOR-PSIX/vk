@@ -7,12 +7,19 @@ import pandas as pd
 from vk_api import VkUpload
 from vk_api.longpoll import VkLongPoll, VkEventType
 import random
+import vk_api  # нужно явно, чтобы не было ошибки импорта
 
 VK_TOKEN = os.getenv('VK_TOKEN')
+
+if not VK_TOKEN:
+    print("❌ ОШИБКА: VK_TOKEN не найден! Зайди в Render → Environment Variables и добавь переменную VK_TOKEN.")
+    exit(1)
 
 vk_session = vk_api.VkApi(token=VK_TOKEN)
 upload = VkUpload(vk_session)
 longpoll = VkLongPoll(vk_session)
+
+print("✅ Бот запущен и слушает сообщения...")
 
 def send_message(user_id, text, attachment=None):
     params = {
@@ -22,7 +29,10 @@ def send_message(user_id, text, attachment=None):
     }
     if attachment:
         params['attachment'] = attachment
-    vk_session.method('messages.send', params)
+    try:
+        vk_session.method('messages.send', params)
+    except Exception as e:
+        print(f"Ошибка отправки: {e}")
 
 GREETINGS = [
     "👋 Привет! Я та самая альтушка с сайта. Готова покопаться в твоих табличках! ✨",
@@ -43,7 +53,6 @@ def get_thinking():
     return random.choice(THINKING)
 
 def clean_text(text):
-    """Чистит текст: убирает лишние пробелы, переносы, табуляции"""
     if not isinstance(text, str):
         return ""
     text = re.sub(r'\s+', ' ', text).strip()
@@ -84,7 +93,11 @@ def extract_driver(text):
     return match.group(0).strip() if match else None
 
 def process_excel_file(file_path):
-    df = pd.read_excel(file_path)
+    try:
+        df = pd.read_excel(file_path)
+    except Exception as e:
+        return f"❌ Не удалось прочитать Excel: {e}", pd.DataFrame()
+
     rows = len(df)
     cols = len(df.columns)
 
@@ -104,7 +117,7 @@ def process_excel_file(file_path):
     if not candidate_cols:
         report += (
             "🔍 Не нашла «длинных» текстовых колонок для разбора.\n"
-            "Если хочешь разобрать конкретную колонку — напиши её название, я добавлю правило! 💛\n"
+            "Если хочешь разобрать конкретную колонку — напиши её название! 💛\n"
         )
         return report, df
 
